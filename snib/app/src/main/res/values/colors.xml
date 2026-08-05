@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Scottish door ironmongery: brass fittings, slate, harl render. -->
+<resources>
+    <color name="slate">#2A2E33</color>
+    <color name="slate_lift">#383D44</color>
+    <color name="brass">#B08A4A</color>
+    <color name="harl">#DCDAD3</color>
+    <color name="verdigris">#3E7C74</color>
+    <color name="rust">#A63D2F</color>
+</resources>

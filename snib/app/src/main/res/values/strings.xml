@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Snib</string>
+    <string name="accessibility_label">Snib</string>
+    <string name="accessibility_summary">Lets Snib see which app is opening, so it can hold the block.</string>
+    <string name="accessibility_description">Snib needs this to know which app has just opened. It is the only way an app on Android can block another app. Snib reads nothing else, sends nothing anywhere, and works entirely on this phone.</string>
+    <string name="device_admin_description">Optional. Makes Snib take an extra deliberate step to uninstall. Snib cannot lock, wipe, or manage your phone.</string>
+    <string name="channel_session_name">Snib session</string>
+    <string name="channel_session_description">Shows while your phone is snibbed.</string>
+    <string name="channel_break_name">Emergency break</string>
+    <string name="channel_break_description">Shows while an emergency break is running.</string>
+</resources>

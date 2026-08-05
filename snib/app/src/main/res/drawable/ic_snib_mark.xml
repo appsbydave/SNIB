@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Snib mark, snibbed state. Bar vertical.
+    Translated 1:1 from snib-mark.svg. The mask there becomes an evenOdd path here:
+    the bar and the pin are one path, so the pin is a hole rather than a painted dot.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+
+    <!-- plate -->
+    <path
+        android:pathData="M21,6 H43 A15,15 0 0 1 58,21 V43 A15,15 0 0 1 43,58 H21 A15,15 0 0 1 6,43 V21 A15,15 0 0 1 21,6 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#B08A4A"
+        android:strokeWidth="4" />
+
+    <!-- bar, with the pin knocked out -->
+    <group android:name="bar" android:pivotX="32" android:pivotY="32" android:rotation="0">
+        <path
+            android:fillColor="#B08A4A"
+            android:fillType="evenOdd"
+            android:pathData="M32,12 A7,7 0 0 1 39,19 V45 A7,7 0 0 1 32,52 A7,7 0 0 1 25,45 V19 A7,7 0 0 1 32,12 Z M35.5,32 A3.5,3.5 0 1 1 28.5,32 A3.5,3.5 0 1 1 35.5,32 Z" />
+    </group>
+</vector>
