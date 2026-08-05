@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Optional. Registered only so that uninstalling Snib takes an extra deliberate step. -->
-<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-policies>
-        <force-lock />
-    </uses-policies>
-</device-admin>

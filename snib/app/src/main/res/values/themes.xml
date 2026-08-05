@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Dark by default. This is used at 11pm; a white screen is the wrong instrument. -->
-    <style name="Theme.Snib" parent="android:Theme.Material.NoActionBar">
-        <item name="android:statusBarColor">@color/slate</item>
-        <item name="android:navigationBarColor">@color/slate</item>
-        <item name="android:windowBackground">@color/slate</item>
-    </style>
-</resources>
