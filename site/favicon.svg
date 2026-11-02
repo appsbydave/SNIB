@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Snib">
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#2A2E33"/>
+  <rect x="9" y="9" width="46" height="46" rx="13" fill="none" stroke="#B08A4A" stroke-width="3.5"/>
+  <path fill="#B08A4A" fill-rule="evenodd"
+        d="M32,15 A6.5,6.5 0 0 1 38.5,21.5 V42.5 A6.5,6.5 0 0 1 32,49 A6.5,6.5 0 0 1 25.5,42.5 V21.5 A6.5,6.5 0 0 1 32,15 Z M35,32 A3,3 0 1 1 29,32 A3,3 0 1 1 35,32 Z"/>
+</svg>

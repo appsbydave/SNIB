@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snib — a physical key for your phone</title>
+  <meta name="description" content="Snib locks your distracting apps behind a physical NFC token. Tap your phone against the token to snib it; tap again to open up. No account, no subscription, nothing leaves your phone." />
+  <meta name="theme-color" content="#2A2E33" />
+
+  <meta property="og:title" content="Snib — a physical key for your phone" />
+  <meta property="og:description" content="Lock your distracting apps behind a physical token. Tap to snib, tap to open up. No account, no subscription." />
+  <meta property="og:type" content="website" />
+
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site">
+    <a class="wordmark" href="#top" aria-label="Snib home">
+      <span class="mark-wrap" id="headerMark"></span>
+      <span>Snib</span>
+    </a>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#why">Why</a>
+      <a href="#recovery">Getting back in</a>
+      <a class="ghlink" href="https://github.com/appsbydave/SNIB" rel="noopener">Source</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="status"><span class="dot"></span> In development · dogfooding</p>
+        <h1>A physical key<br />for your phone.</h1>
+        <p class="lede">
+          Snib locks your distracting apps behind a token you can hold. Tap your phone
+          against it and the apps you chose won't open. Tap again to open up.
+        </p>
+        <p class="sub">
+          The off switch isn't on the screen. It's an object in the room.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="https://github.com/appsbydave/SNIB" rel="noopener">See the source</a>
+          <a class="btn ghost" href="#how">How it works</a>
+        </div>
+      </div>
+      <div class="hero-mark">
+        <button id="bigMark" class="big-mark" aria-pressed="true" aria-label="Toggle the snib">
+          <!-- mark injected by script -->
+        </button>
+        <p class="mark-caption" id="markCaption">Snibbed — tap to open</p>
+      </div>
+    </section>
+
+    <section id="how" class="band">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li>
+          <span class="step-n">1</span>
+          <h3>Pick your apps</h3>
+          <p>Choose the apps you want gone when you snib. The dialler, messages, emergency calling and Settings can never be locked.</p>
+        </li>
+        <li>
+          <span class="step-n">2</span>
+          <h3>Tap to snib</h3>
+          <p>Hold your phone against a token. A sharp buzz, the mark turns, and your blocklist is shut. That's the whole action.</p>
+        </li>
+        <li>
+          <span class="step-n">3</span>
+          <h3>Tap to open up</h3>
+          <p>Tap the same token again to unsnib. No passwords, no timers to wait out, no screen to argue with. The key is in your hand or it isn't.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="why" class="band alt">
+      <h2>Why a token?</h2>
+      <div class="two">
+        <div>
+          <p class="big-claim">Every other blocker keeps the off switch on the same screen as the block.</p>
+          <p>A dashboard, a timer, an “are you sure?”. When the urge hits, the way out is one tap away, on the glass you're already holding. Willpower against a button you put there yourself is not a fair fight.</p>
+        </div>
+        <div>
+          <p class="big-claim">Snib moves the switch off the screen and into the world.</p>
+          <p>To open up you need the token — on your desk, on your keys, in another room. That small physical distance is the whole product. It isn't there to defeat you with a laptop; it's there to beat the reflex.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <h2>Tokens belong to a household</h2>
+      <div class="two">
+        <div>
+          <p>Set Snib up and it writes a token for you. Any blank NFC tag — a sticker, a disc, something nicer — becomes one in a tap. Make as many as you like: one by the desk, one by the bed.</p>
+          <p>Add your partner's phone by tapping any of your tokens on it. Now your tokens work on their phone and theirs on yours. Someone else's Snib token does nothing on either.</p>
+        </div>
+        <div>
+          <ul class="facts">
+            <li><strong>No account.</strong> No email, no sign-in.</li>
+            <li><strong>No server.</strong> Your household lives on your phones, nowhere else.</li>
+            <li><strong>Nothing leaves the phone.</strong> Snib has no analytics and no network calls.</li>
+            <li><strong>No subscription.</strong> A free app and a token you buy once.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="recovery" class="band alt">
+      <h2>You can always get back in</h2>
+      <p class="section-lede">A phone must never trap you. There are three ways back in, in the order you'll reach for them.</p>
+      <div class="three">
+        <div class="card">
+          <h3>Another token</h3>
+          <p>Usually the answer. Your partner's token is on their keys; any token in your household opens any phone in it.</p>
+        </div>
+        <div class="card">
+          <h3>An emergency break</h3>
+          <p>Three a week, five minutes each, resetting Monday. Deliberately scarce, never for sale. Enough to grab the thing you actually needed.</p>
+        </div>
+        <div class="card">
+          <h3>Recovery codes</h3>
+          <p>Eight single-use codes from setup, kept in your wallet. For when the token's at home and you're in another city needing your banking app.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="band honest">
+      <h2>What Snib won't pretend</h2>
+      <p class="section-lede">
+        Snib makes your blocklist <em>hard to undo</em>. It does not make it impossible, and it
+        never will claim to. A determined person with a minute and the Settings app can switch it
+        off — the same ceiling every blocker on Android lives under. The job is beating the reflex,
+        not beating you with a laptop. If a blocker tells you it's unbreakable, its own update
+        history is telling you otherwise.
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>Private by construction</h2>
+      <div class="two">
+        <div>
+          <p>Snib asks for the Accessibility permission because that is the only way one Android app can tell when another is opening, and hold a block in front of it. It reads nothing else and sends nothing anywhere.</p>
+          <p>There's no account to leak and no server to breach, because there isn't one. Your household secret is kept in your phone's hardware keystore and backed up nowhere.</p>
+        </div>
+        <div>
+          <ul class="facts">
+            <li><strong>Open source.</strong> Every line is on <a href="https://github.com/appsbydave/SNIB" rel="noopener">GitHub</a>.</li>
+            <li><strong>Works offline.</strong> No connection needed, ever.</li>
+            <li><strong>Android.</strong> NFC phone required. iOS can't block app launches the same way.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="band cta-band">
+      <h2>Not on the store yet.</h2>
+      <p class="section-lede">
+        Snib is being built and lived with before it ships. You can read the whole thing — the
+        app, the design brief, the engineering notes — on GitHub today.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/appsbydave/SNIB" rel="noopener">Read the source</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="mark-wrap small" id="footMark"></div>
+    <p>Snib — <span class="scots">Scots for the catch on a door.</span> An <a href="https://appsbydave.com" rel="noopener">Apps&nbsp;by&nbsp;Dave</a> project.</p>
+    <p class="fine">No account · no subscription · nothing leaves your phone.</p>
+  </footer>
+
+  <script src="snib.js"></script>
+</body>
+</html>
