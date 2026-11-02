@@ -78,9 +78,10 @@ Pure-JVM, no device, run on every push:
 
 ## Releases
 
-`.github/workflows/release.yml` builds a **signed release APK** and attaches it to a GitHub Release
-when you push a `vX.Y.Z` tag (or run it manually). It needs four repository secrets
-(Settings → Secrets and variables → Actions):
+`.github/workflows/release.yml` builds an APK and attaches it to a GitHub Release when you push a
+`vX.Y.Z` tag (or run it manually) — download it straight onto the phone to install. With no
+signing secrets it ships a **debug-signed** APK, which installs and runs fine for dogfooding. For a
+**signed release** APK, add four repository secrets (Settings → Secrets and variables → Actions):
 
 | Secret | What it is |
 |---|---|

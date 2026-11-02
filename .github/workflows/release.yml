@@ -1,7 +1,11 @@
 name: Release APK
 
-# Tag a release (git tag v0.9.0 && git push --tags) or run manually. Builds a signed release APK
-# and attaches it to a GitHub Release, which is how dogfood builds are distributed.
+# Tag a build (git tag v0.9.0 && git push --tags) or run manually. Produces an installable APK
+# and attaches it to a GitHub Release, which you can download straight onto the phone.
+#
+# If the four signing secrets are set (see README → Releases) it builds a signed *release* APK.
+# If not, it falls back to a *debug* APK — debug-signed, so it still installs and runs, which is
+# all you need to dogfood. Switching between debug and release later needs an uninstall first.
 on:
   push:
     tags: ['v*']
@@ -22,34 +26,56 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
 
-      - name: Check signing secrets are present
+      - name: Choose signing mode
+        id: mode
         env:
           HAVE_KEYSTORE: ${{ secrets.SNIB_KEYSTORE_BASE64 != '' }}
         run: |
-          if [ "$HAVE_KEYSTORE" != "true" ]; then
-            echo "::error::Release signing secrets are not set. Add SNIB_KEYSTORE_BASE64," \
-                 "SNIB_KEYSTORE_PASSWORD, SNIB_KEY_ALIAS and SNIB_KEY_PASSWORD in the repo's" \
-                 "Settings → Secrets and variables → Actions. See README → Releases."
-            exit 1
+          if [ "$HAVE_KEYSTORE" = "true" ]; then
+            echo "mode=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=debug" >> "$GITHUB_OUTPUT"
+            echo "::notice::No signing secrets set — building a debug-signed APK. It installs and runs fine for testing. Add SNIB_KEYSTORE_* secrets for a signed release build."
           fi
 
       - name: Decode keystore
+        if: steps.mode.outputs.mode == 'release'
         run: echo "${{ secrets.SNIB_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/snib-release.jks"
 
-      - name: Assemble signed release APK
+      - name: Build APK
         env:
           SNIB_KEYSTORE_PATH: ${{ runner.temp }}/snib-release.jks
           SNIB_KEYSTORE_PASSWORD: ${{ secrets.SNIB_KEYSTORE_PASSWORD }}
           SNIB_KEY_ALIAS: ${{ secrets.SNIB_KEY_ALIAS }}
           SNIB_KEY_PASSWORD: ${{ secrets.SNIB_KEY_PASSWORD }}
-        run: ./gradlew --no-daemon assembleRelease
+        run: |
+          if [ "${{ steps.mode.outputs.mode }}" = "release" ]; then
+            ./gradlew --no-daemon assembleRelease
+            echo "APK=app/build/outputs/apk/release/app-release.apk" >> "$GITHUB_ENV"
+          else
+            ./gradlew --no-daemon assembleDebug
+            echo "APK=app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_ENV"
+          fi
+
+      - name: Rename APK with the tag
+        run: |
+          mkdir -p dist
+          cp "$APK" "dist/snib-${{ github.ref_name }}-${{ steps.mode.outputs.mode }}.apk"
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/app-release.apk
+          files: dist/*.apk
           fail_on_unmatched_files: true
           generate_release_notes: true
+          body: |
+            Install on an NFC Android phone (a Pixel is ideal):
+            1. Download the `.apk` below on the phone and open it; allow installing from this source.
+            2. Open Snib and follow setup. On Android 13+, if the Accessibility toggle is greyed out,
+               go to Settings → Apps → Snib → ⋮ → **Allow restricted settings** first.
+            3. You need a blank NFC tag (an NTAG213 sticker is fine) to write your first token.
+
+            `${{ steps.mode.outputs.mode }}` build. Hard to undo, never impossible.
