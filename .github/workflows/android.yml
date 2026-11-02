@@ -25,8 +25,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # The ubuntu-latest image ships the Android SDK (ANDROID_HOME set, licenses accepted).
+      # android-actions/setup-android currently crashes on this runner, so we use what's there and
+      # just (re)accept licenses defensively in case AGP needs to pull a package.
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
 
       - name: Gradle cache
         uses: actions/cache@v4
