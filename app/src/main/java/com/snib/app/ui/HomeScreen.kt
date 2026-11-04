@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.snib.app.data.SessionRepository
@@ -30,20 +31,25 @@ import com.snib.app.ui.theme.Snib
 import kotlinx.coroutines.delay
 
 /**
- * Snibbed: the mark, elapsed time in display type, remaining breaks in small text. Nothing else.
- * No charts, no counters, no streaks.
+ * Snibbed: the mark, elapsed time in display type, your kept apps as plain text links, remaining
+ * breaks in small text. Nothing else. No charts, no counters, no streaks.
+ *
+ * The same kept-app links appear on the snibbed home screen that covers the launcher
+ * (SnibbedHomeOverlay), so wherever you land while snibbed, you see the same short list.
  */
 @Composable
 fun HomeScreen(
     notice: String?,
-    blockedCount: Int,
+    keptCount: Int,
     onOpenBlocklist: () -> Unit,
     onOpenTokens: () -> Unit,
     onOpenCodes: () -> Unit,
     onTakeBreak: () -> Unit,
     onUseCode: () -> Unit,
 ) {
+    val context = LocalContext.current
     val state by SessionRepository.state.collectAsState()
+    val allowed by SessionRepository.allowed.collectAsState()
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -56,21 +62,24 @@ fun HomeScreen(
     val breakRemaining = remember(now, snibbed) { SessionRepository.breakRemainingMs() }
     val onBreak = breakRemaining > 0L
     val breaksLeft = remember(now / 60_000, snibbed) { SessionRepository.breaksRemaining() }
+    val kept = remember(allowed) { HomeLinks.kept(context, allowed) }
+    val always = remember { HomeLinks.always(context, includeSnib = false) }
 
     Box(Modifier.fillMaxSize().padding(horizontal = 28.dp)) {
 
         Column(
-            Modifier.fillMaxSize(),
+            // While snibbed, centre above the two quiet lines at the foot rather than behind them.
+            Modifier.fillMaxSize().padding(bottom = if (snibbed) 96.dp else 0.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            SnibMark(snibbed = snibbed, modifier = Modifier.size(112.dp))
+            SnibMark(snibbed = snibbed, modifier = Modifier.size(if (snibbed) 88.dp else 112.dp))
 
             Spacer(Modifier.height(28.dp))
 
             if (snibbed) {
                 Text(
-                    elapsed(state.snibbedAt!!, now),
+                    formatElapsed(state.snibbedAt!!, now),
                     style = MaterialTheme.typography.displayLarge,
                     color = Snib.harl,
                 )
@@ -80,6 +89,14 @@ fun HomeScreen(
                     color = Snib.brass,
                     modifier = Modifier.padding(top = 6.dp),
                 )
+                if (!onBreak) {
+                    Spacer(Modifier.height(32.dp))
+                    KeptAppLinks(
+                        kept = kept,
+                        always = always,
+                        onOpen = { HomeLinks.open(context, it) },
+                    )
+                }
             } else {
                 Text(
                     "Not snibbed",
@@ -105,7 +122,7 @@ fun HomeScreen(
             if (!snibbed) {
                 Spacer(Modifier.height(40.dp))
                 Column(Modifier.fillMaxWidth()) {
-                    QuietRow("Apps", "$blockedCount blocked", onOpenBlocklist)
+                    QuietRow("Apps", "$keptCount of ${SessionRepository.MAX_ALLOWED} kept", onOpenBlocklist)
                     QuietRow("Tokens", null, onOpenTokens)
                     QuietRow("Recovery codes", null, onOpenCodes)
                 }
@@ -150,13 +167,6 @@ fun HomeScreen(
             }
         }
     }
-}
-
-private fun elapsed(from: Long, now: Long): String {
-    val seconds = ((now - from) / 1000).coerceAtLeast(0)
-    val hours = seconds / 3600
-    val minutes = (seconds % 3600) / 60
-    return if (hours > 0) "%dh %02dm".format(hours, minutes) else "%dm".format(minutes)
 }
 
 private fun countdown(remainingMs: Long): String {

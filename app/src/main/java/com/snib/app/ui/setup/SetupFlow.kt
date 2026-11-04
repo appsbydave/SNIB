@@ -42,7 +42,7 @@ import com.snib.app.household.HouseholdKey
 import com.snib.app.nfc.TapMode
 import com.snib.app.recovery.RecoveryCodes
 import com.snib.app.ui.BlockScreen
-import com.snib.app.ui.BlocklistScreen
+import com.snib.app.ui.AppsScreen
 import com.snib.app.ui.CodeSheet
 import com.snib.app.ui.SnibMark
 import com.snib.app.ui.components.Notice
@@ -118,13 +118,14 @@ private fun Welcome(onNext: () -> Unit) {
 
 @Composable
 private fun PickApps(onNext: () -> Unit) {
-    val blocked by SessionRepository.blocked.collectAsState()
+    // Keeping nothing is a real choice — the phone, messages, clock and Settings stay usable — so
+    // Next is never disabled here.
+    val allowed by SessionRepository.allowed.collectAsState()
     Column(Modifier.fillMaxSize()) {
-        Box(Modifier.weight(1f)) { BlocklistScreen(onBack = null) }
+        Box(Modifier.weight(1f)) { AppsScreen(onBack = null) }
         Box(Modifier.padding(24.dp)) {
             PrimaryButton(
-                if (blocked.isEmpty()) "Pick at least one app" else "Next",
-                enabled = blocked.isNotEmpty(),
+                if (allowed.isEmpty()) "Keep nothing" else "Next",
                 onClick = onNext,
             )
         }
@@ -161,8 +162,8 @@ private fun PermissionSteps(onNext: () -> Unit) {
             ),
             Ask(
                 title = "Let Snib draw over other apps",
-                why = "The block screen appears on top of the app you opened, instead of " +
-                    "bouncing you home without explanation.",
+                why = "While you're snibbed, your home screen shows only the apps you kept. " +
+                    "This is what lets Snib cover the app drawer.",
                 optional = false,
                 granted = { Permissions.overlayGranted(context) },
                 intent = { Permissions.overlayIntent(context) },

@@ -16,7 +16,9 @@
 
     <uses-feature android:name="android.hardware.nfc" android:required="true" />
 
-    <!-- We list launchable apps in the blocklist picker. Scoped query, not QUERY_ALL_PACKAGES. -->
+    <!-- Scoped queries, not QUERY_ALL_PACKAGES. Every app with a launcher icon (the picker, and the
+         allowlist: anything with an icon that isn't kept is blocked), plus what the protected
+         floor has to find — the dialler, the clock, emergency assistance, keyboards, launchers. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -31,7 +33,19 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.HOME" />
         </intent>
-        <!-- So a default browser can be identified and flagged in the blocklist picker. -->
+        <!-- The clock is protected: an alarm going off must always be dismissable. -->
+        <intent>
+            <action android:name="android.intent.action.SHOW_ALARMS" />
+        </intent>
+        <!-- Emergency assistance is protected. -->
+        <intent>
+            <action android:name="android.telephony.action.EMERGENCY_ASSISTANCE" />
+        </intent>
+        <!-- Keyboards are protected, in case one has a launcher icon of its own. -->
+        <intent>
+            <action android:name="android.view.InputMethod" />
+        </intent>
+        <!-- So a browser can be identified and flagged in the picker when it's kept. -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.BROWSABLE" />

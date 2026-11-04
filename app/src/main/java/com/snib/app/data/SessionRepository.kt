@@ -2,6 +2,7 @@ package com.snib.app.data
 
 import android.content.Context
 import android.os.SystemClock
+import com.snib.app.apps.InstalledApps
 import com.snib.app.recovery.Breaks
 import com.snib.app.recovery.TrustedClock
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,19 +13,24 @@ import kotlinx.coroutines.flow.asStateFlow
  * The one source of truth for "is this phone snibbed, and does this package get through".
  *
  * Everything runs in a single process, so the accessibility service, the foreground service and
- * the UI all read the same object. The blocking hot path never touches the database: it reads two
- * volatile fields and a cached boot count. Writes go to Room synchronously first, then update the
- * cache and emit on the state flow — the accessibility service re-decides on every emission, so a
- * snib, unsnib or break start enforces itself immediately.
+ * the UI all read the same object. The blocking hot path never touches the database or the package
+ * manager: it reads volatile fields — the session, the allowlist, the app catalog — and a cached
+ * boot count. Writes go to Room synchronously first, then update the cache and emit on the state
+ * flow — the accessibility service re-decides on every emission, so a snib, unsnib or break start
+ * enforces itself immediately.
  */
 object SessionRepository {
+
+    /** Kept apps, at most. Digital Detox's lesson: a short list is the product. */
+    const val MAX_ALLOWED = 5
 
     lateinit var dao: SnibDao
         private set
 
     private lateinit var appContext: Context
 
-    @Volatile private var blockedCache: Set<String> = emptySet()
+    @Volatile private var allowedCache: Set<String> = emptySet()
+    @Volatile private var catalog: AppCatalog = AppCatalog.EMPTY
     @Volatile private var stateCache: SessionStateEntity = SessionStateEntity()
     @Volatile private var loaded = false
 
@@ -37,8 +43,9 @@ object SessionRepository {
     private val _state = MutableStateFlow(SessionStateEntity())
     val state: StateFlow<SessionStateEntity> = _state.asStateFlow()
 
-    private val _blocked = MutableStateFlow<Set<String>>(emptySet())
-    val blocked: StateFlow<Set<String>> = _blocked.asStateFlow()
+    private val _allowed = MutableStateFlow<Set<String>>(emptySet())
+    /** The kept apps. Shown on the snibbed home screen; everything else with an icon is blocked. */
+    val allowed: StateFlow<Set<String>> = _allowed.asStateFlow()
 
     fun init(context: Context) {
         if (loaded) return
@@ -46,6 +53,7 @@ object SessionRepository {
         dao = SnibDatabase.get(appContext).dao()
         currentBoot = TrustedClock.bootCount(appContext)
         reload()
+        refreshCatalog()
     }
 
     /** Safe to call from any thread. Cheap after the first call. */
@@ -56,10 +64,34 @@ object SessionRepository {
     @Synchronized
     fun reload() {
         stateCache = dao.sessionStateNow() ?: SessionStateEntity()
-        blockedCache = dao.blockedPackagesNow().toSet()
+        allowedCache = dao.allowedPackagesNow().toSet()
         loaded = true
         _state.value = stateCache
-        _blocked.value = blockedCache
+        _allowed.value = allowedCache
+    }
+
+    /**
+     * Re-read which apps exist, which are protected and which is the launcher. Called at start-up,
+     * on every snib, and whenever an app is installed, removed or changed — so an app installed
+     * mid-session is blocked too, and a new default dialler or keyboard is protected straight away.
+     */
+    fun refreshCatalog() {
+        if (!::appContext.isInitialized) return
+        val next = InstalledApps.catalog(appContext)
+        catalog = next
+        // Forget kept apps that have since been uninstalled, so they don't use up one of the five.
+        // Asked of the package manager directly, not inferred from the launcher list: mid-update
+        // an app can briefly vanish from that list, and an auto-update must never un-keep it.
+        if (next.launchable.isNotEmpty()) {
+            val gone = allowedCache.filterNot { InstalledApps.isInstalled(appContext, it) }
+            if (gone.isNotEmpty()) {
+                synchronized(this) {
+                    gone.forEach(dao::disallow)
+                    allowedCache = dao.allowedPackagesNow().toSet()
+                    _allowed.value = allowedCache
+                }
+            }
+        }
     }
 
     // --- reads on the hot path ---
@@ -84,8 +116,10 @@ object SessionRepository {
     }
 
     /** Called from the accessibility callback and the usage poll. Must stay allocation-light. */
-    fun shouldBlock(packageName: String): Boolean =
-        BlockDecision.shouldBlock(isSnibbed, onBreak(), packageName, blockedCache)
+    fun verdict(packageName: String): Verdict =
+        BlockDecision.decide(isSnibbed, onBreak(), packageName, allowedCache, catalog)
+
+    fun shouldBlock(packageName: String): Boolean = verdict(packageName) == Verdict.BLOCK
 
     /** Trusted wall-clock "now" for week boundaries and the stranded check. */
     private fun trustedNow(): Long {
@@ -113,6 +147,7 @@ object SessionRepository {
     @Synchronized
     fun snib() {
         if (stateCache.snibbedAt != null) return
+        refreshCatalog()
         val anchor = TrustedClock.anchor(appContext)
         currentBoot = anchor.boot
         write(
@@ -169,14 +204,23 @@ object SessionRepository {
         return true
     }
 
+    /**
+     * Keep or stop keeping an app. Returns false if nothing changed: snibbed, or already at five.
+     */
     @Synchronized
-    fun setBlocked(packageName: String, blocked: Boolean) {
+    fun setAllowed(packageName: String, allowed: Boolean): Boolean {
         // Editable only while unsnibbed. Without this line someone eventually builds an edit
         // path and the edit path becomes the bypass.
-        if (isSnibbed) return
-        if (blocked) dao.block(BlockedAppEntity(packageName)) else dao.unblock(packageName)
-        blockedCache = dao.blockedPackagesNow().toSet()
-        _blocked.value = blockedCache
+        if (isSnibbed) return false
+        if (allowed) {
+            if (packageName !in allowedCache && allowedCache.size >= MAX_ALLOWED) return false
+            dao.allow(AllowedAppEntity(packageName))
+        } else {
+            dao.disallow(packageName)
+        }
+        allowedCache = dao.allowedPackagesNow().toSet()
+        _allowed.value = allowedCache
+        return true
     }
 
     private fun write(next: SessionStateEntity) {

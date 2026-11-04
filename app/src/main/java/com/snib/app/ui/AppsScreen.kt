@@ -45,25 +45,43 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * A scrolling checkbox list: icon, name, checkbox. Search at the top.
- * No categories, no presets, no per-app stats.
+ * Choose the apps to keep while snibbed — up to five. Everything else is snibbed.
+ *
+ * A scrolling checkbox list: icon, name, checkbox. Search at the top. No categories, no presets,
+ * no per-app stats. A tick means *kept*. The icons live here and only here: the snibbed home
+ * screen shows kept apps as plain names.
  */
 @Composable
-fun BlocklistScreen(onBack: (() -> Unit)? = null) {
+fun AppsScreen(onBack: (() -> Unit)? = null) {
     val context = LocalContext.current
-    val blocked by SessionRepository.blocked.collectAsState()
-    val editable = !SessionRepository.isSnibbed
+    val allowed by SessionRepository.allowed.collectAsState()
+    val state by SessionRepository.state.collectAsState()
+    val editable = state.snibbedAt == null
     var query by remember { mutableStateOf("") }
 
     val apps by produceState(initialValue = emptyList<InstalledApp>()) {
         value = withContext(Dispatchers.IO) { InstalledApps.load(context) }
     }
 
-    val (allowed, choosable) = apps.partition { it.protected }
+    val (always, choosable) = apps.partition { it.protected }
     val visible = choosable.filter { it.label.contains(query, ignoreCase = true) }
+    val max = SessionRepository.MAX_ALLOWED
+    val full = allowed.size >= max
 
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
         ScreenHeader("Apps", onBack)
+
+        Text(
+            "Tick up to $max apps to keep. Everything else is snibbed.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Snib.harlDim,
+        )
+        Text(
+            if (full) "$max of $max kept. Untick one to swap it." else "${allowed.size} of $max kept",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (full) Snib.brass else Snib.harlFaint,
+            modifier = Modifier.padding(top = 6.dp, bottom = 16.dp),
+        )
 
         if (!editable) {
             Notice("Your phone is snibbed. Apps can be changed once you tap your token.")
@@ -90,12 +108,13 @@ fun BlocklistScreen(onBack: (() -> Unit)? = null) {
 
         LazyColumn(Modifier.fillMaxSize()) {
             items(visible, key = { it.packageName }) { app ->
-                val checked = app.packageName in blocked
+                val checked = app.packageName in allowed
                 AppRow(
                     app = app,
                     checked = checked,
-                    enabled = editable,
-                    onToggle = { SessionRepository.setBlocked(app.packageName, it) },
+                    // At five, the unticked rows go quiet until one is unticked.
+                    enabled = editable && (checked || !full),
+                    onToggle = { SessionRepository.setAllowed(app.packageName, it) },
                 )
                 if (app.isBrowser && checked) {
                     Text(
@@ -107,7 +126,7 @@ fun BlocklistScreen(onBack: (() -> Unit)? = null) {
                 }
             }
 
-            if (query.isBlank() && allowed.isNotEmpty()) {
+            if (query.isBlank() && always.isNotEmpty()) {
                 item {
                     Text(
                         "Always allowed",
@@ -116,18 +135,18 @@ fun BlocklistScreen(onBack: (() -> Unit)? = null) {
                         modifier = Modifier.padding(top = 28.dp, bottom = 4.dp),
                     )
                     Text(
-                        "The dialler, messages, emergency calling and Settings can never be " +
-                            "snibbed. Neither can Snib itself.",
+                        "The phone, messages, the clock and Settings are never snibbed, and " +
+                            "emergency calls always work. They don't count towards your $max.",
                         style = MaterialTheme.typography.labelSmall,
                         color = Snib.harlFaint,
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                 }
-                items(allowed, key = { "protected-" + it.packageName }) { app ->
+                items(always, key = { "protected-" + it.packageName }) { app ->
                     AppRow(app = app, checked = false, enabled = false, onToggle = {})
                 }
-                item { Spacer(Modifier.height(48.dp)) }
             }
+            item { Spacer(Modifier.height(48.dp)) }
         }
     }
 }
@@ -165,7 +184,7 @@ private fun AppRow(
             Text(
                 app.label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (app.protected) Snib.harlFaint else Snib.harl,
+                color = if (app.protected || !enabled && !checked) Snib.harlFaint else Snib.harl,
             )
         }
         if (!app.protected) {
@@ -177,6 +196,8 @@ private fun AppRow(
                     checkedColor = Snib.brass,
                     uncheckedColor = Snib.harlFaint,
                     checkmarkColor = Snib.slate,
+                    disabledUncheckedColor = Snib.harlFaint.copy(alpha = 0.2f),
+                    disabledCheckedColor = Snib.brass.copy(alpha = 0.5f),
                 ),
             )
         }

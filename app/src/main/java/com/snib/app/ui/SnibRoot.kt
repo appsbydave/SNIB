@@ -32,7 +32,7 @@ fun SnibRoot() {
     val context = LocalContext.current
     val setupComplete by AppState.setupComplete.collectAsState()
     val notice by AppState.notice.collectAsState()
-    val blocked by SessionRepository.blocked.collectAsState()
+    val allowed by SessionRepository.allowed.collectAsState()
     val navController = rememberNavController()
 
     LaunchedEffect(notice) {
@@ -56,7 +56,7 @@ fun SnibRoot() {
             composable(Route.HOME) {
                 HomeScreen(
                     notice = notice,
-                    blockedCount = blocked.size,
+                    keptCount = allowed.size,
                     onOpenBlocklist = { navController.navigate(Route.APPS) },
                     onOpenTokens = { navController.navigate(Route.TOKENS) },
                     onOpenCodes = { navController.navigate(Route.CODES) },
@@ -65,7 +65,7 @@ fun SnibRoot() {
                 )
             }
             composable(Route.APPS) {
-                BlocklistScreen(onBack = { navController.popBackStack() })
+                AppsScreen(onBack = { navController.popBackStack() })
             }
             composable(Route.TOKENS) {
                 TokensScreen(notice = notice, onBack = { navController.popBackStack() })

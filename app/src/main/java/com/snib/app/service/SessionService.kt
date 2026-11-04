@@ -19,6 +19,7 @@ import com.snib.app.R
 import com.snib.app.SnibApp
 import com.snib.app.block.BlockOverlay
 import com.snib.app.data.SessionRepository
+import com.snib.app.data.Verdict
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -185,15 +186,19 @@ class SessionService : Service() {
             fallbackOverlay?.hide()
             return
         }
-        if (front != null && front != packageName && SessionRepository.shouldBlock(front)) {
-            ensureFallbackOverlay().show(labelOf(front))
-        } else {
+        if (front == null) {
             fallbackOverlay?.hide()
+            return
+        }
+        when (SessionRepository.verdict(front)) {
+            Verdict.BLOCK -> ensureFallbackOverlay().show(labelOf(front))
+            Verdict.HOME -> ensureFallbackOverlay().showHome()
+            Verdict.ALLOW -> fallbackOverlay?.hide()
         }
     }
 
     private fun ensureFallbackOverlay(): BlockOverlay =
-        fallbackOverlay ?: BlockOverlay(this) {
+        fallbackOverlay ?: BlockOverlay(this, onDismiss = {
             // No GLOBAL_ACTION_HOME without the accessibility service, so go home by intent.
             fallbackOverlay?.hide()
             startActivity(
@@ -201,7 +206,7 @@ class SessionService : Service() {
                     .addCategory(Intent.CATEGORY_HOME)
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
-        }.also { fallbackOverlay = it }
+        }).also { fallbackOverlay = it }
 
     private fun labelOf(packageName: String): String = labels.getOrPut(packageName) {
         runCatching {

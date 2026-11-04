@@ -20,19 +20,16 @@ interface SnibDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun putSessionState(state: SessionStateEntity)
 
-    // --- blocklist ---
+    // --- allowlist: the apps kept while snibbed ---
 
-    @Query("SELECT packageName FROM blocked_apps")
-    fun blockedPackagesNow(): List<String>
-
-    @Query("SELECT packageName FROM blocked_apps")
-    fun blockedPackagesFlow(): Flow<List<String>>
+    @Query("SELECT packageName FROM allowed_apps")
+    fun allowedPackagesNow(): List<String>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun block(app: BlockedAppEntity)
+    fun allow(app: AllowedAppEntity)
 
-    @Query("DELETE FROM blocked_apps WHERE packageName = :packageName")
-    fun unblock(packageName: String)
+    @Query("DELETE FROM allowed_apps WHERE packageName = :packageName")
+    fun disallow(packageName: String)
 
     // --- history ---
 

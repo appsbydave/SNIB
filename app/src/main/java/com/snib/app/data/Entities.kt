@@ -33,8 +33,12 @@ data class SessionStateEntity(
     val breakBoot: Int = -1,
 )
 
-@Entity(tableName = "blocked_apps")
-data class BlockedAppEntity(
+/**
+ * The apps kept while snibbed — at most [SessionRepository.MAX_ALLOWED]. Everything else with a
+ * launcher icon is blocked. Replaced the August blocklist in schema v3.
+ */
+@Entity(tableName = "allowed_apps")
+data class AllowedAppEntity(
     @PrimaryKey val packageName: String,
 )
 
